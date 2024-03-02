@@ -31,56 +31,12 @@ func completer(d prompt.Document) []prompt.Suggest {
 	if group != nil {
 		command := group["command"]
 
-		if command == GENERATE_COMMAND {
+		if command == GENERATE_COMMAND || command == LIST_COMMAND || command == DOWNLOAD_COMMAND {
 			if len(strings.Split(d.Text, " ")) > 2 {
 				return []prompt.Suggest{}
 			}
-			return cliCommands.GetHelpSuggestion()
 		}
 
-		if command == LIST_COMMAND {
-			if len(strings.Split(d.Text, " ")) > 2 {
-				return []prompt.Suggest{}
-			}
-			if val, ok := cliCommands.IsCLISubCommand(command); ok {
-				return prompt.FilterHasPrefix(val, word, true)
-			}
-		}
-
-		//if command == "start" {
-		//	return containerListCompleter(true)
-		//}
-		//
-		//if command == "run" {
-		//	if word == "-p" {
-		//		if len(portMappingSuggestions) > 0 {
-		//			return portMappingSuggestions
-		//		}
-		//
-		//		return portMappingSuggestion()
-		//	}
-		//
-		//	if len(suggestedImages) > 0 {
-		//		return suggestedImages
-		//	}
-		//
-		//	return imagesSuggestion()
-		//}
-		//
-		//if command == "pull" {
-		//	if strings.Index(word, ":") != -1 || strings.Index(word, "@") != -1 {
-		//		return []prompt.Suggest{}
-		//	}
-		//
-		//	if word == "" || len(word) > 2 {
-		//		if len(strings.Split(d.Text, " ")) > 2 {
-		//			return []prompt.Suggest{}
-		//		}
-		//		return getFromCache(word)
-		//	}
-		//
-		//	return []prompt.Suggest{}
-		//}
 		if val, ok := cliCommands.IsCLISubCommand(command); ok {
 			return prompt.FilterHasPrefix(val, word, true)
 		}

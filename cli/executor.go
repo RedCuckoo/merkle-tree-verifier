@@ -69,6 +69,7 @@ func (e *CommandExecutor) generateCommand(command []string) error {
 	}
 	if len(command) == 1 || len(command) == 2 && command[1] == HELP_COMMAND {
 		fmt.Printf("\nUsage: %s AMOUNT_OF_FILES_TO_GENERATE\n\n", GENERATE_COMMAND)
+		return nil
 	}
 
 	if len(command) == 2 {
@@ -95,6 +96,7 @@ func (e *CommandExecutor) listCommand(command []string) error {
 		fmt.Printf("\nOptions:\n" +
 			"\t--local  	Display local files\n" +
 			"\t--remote 	Display remote files on the server\n")
+		return nil
 	}
 
 	if len(command) == 2 {
@@ -102,6 +104,7 @@ func (e *CommandExecutor) listCommand(command []string) error {
 		case "--local":
 			return e.Client.ListLocal()
 		case "--remote":
+			return e.Client.ListRemote()
 		}
 	}
 

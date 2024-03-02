@@ -101,6 +101,23 @@ func (c *ClientService) ListLocal() error {
 	return nil
 }
 
+func (c *ClientService) ListRemote() error {
+	// TODO: implement
+
+	files, err := getStoredFiles()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Listing local files:")
+	for i, file := range files {
+		fmt.Printf("%d. %s\n", i+1, file.Name())
+	}
+
+	return nil
+}
+
 func (c *ClientService) Reset() error {
 	c.merkleTreeCreated = false
 	// TODO: reset server
