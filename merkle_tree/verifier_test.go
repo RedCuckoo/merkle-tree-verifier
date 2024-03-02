@@ -36,4 +36,13 @@ func TestMerkleTreeVerifierValidateFileByProof(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, true, ok)
+
+	ok, err = new(MerkleTreeVerifier).ValidateFileByProof(
+		[]byte{0x2d, 0x4d, 0x44, 0x7d, 0x6b, 0xc7},
+		proof,
+		decodeString,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, false, ok)
 }

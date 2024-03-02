@@ -4,11 +4,21 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
+	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
 )
 
 type MerkleProof struct {
 	Proof     [][]byte
 	Direction []bool
+}
+
+func (m *MerkleProof) UnmarshalProto(protoProof *proto.MerkleProof) *MerkleProof {
+	*m = MerkleProof{
+		Proof:     protoProof.GetProof(),
+		Direction: protoProof.GetDirection(),
+	}
+
+	return m
 }
 
 type MerkleTreeVerifier struct{}
