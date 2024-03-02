@@ -1,4 +1,4 @@
-package main
+package merkle_tree
 
 import (
 	"crypto/sha256"
@@ -7,17 +7,15 @@ import (
 	"math"
 )
 
-type Hash []byte
-
 type MerkleTree struct {
-	tree   [][]Hash
+	tree   [][][]byte
 	height int
 }
 
-func (t *MerkleTree) Init(hashes []Hash) *MerkleTree {
+func (t *MerkleTree) Init(hashes [][]byte) *MerkleTree {
 	height := calcHeight(len(hashes))
 
-	*t = MerkleTree{tree: make([][]Hash, height), height: height}
+	*t = MerkleTree{tree: make([][][]byte, height), height: height}
 
 	if t.height == 0 {
 		return t
@@ -33,24 +31,33 @@ func (t *MerkleTree) Init(hashes []Hash) *MerkleTree {
 	return t
 }
 
-func (t *MerkleTree) GetProof(file int) []Hash {
-	proof := make([]Hash, t.height-1)
+func (t *MerkleTree) GetProof(file int) *MerkleProof {
+
+	proof := make([][]byte, t.height-1)
+	direction := make([]bool, t.height-1)
 	for level := 0; level < t.height-1; level++ {
 		hashes := modifyOddLengthHashes(t.tree[level])
 		if file%2 == 0 {
-			proof = append(proof, hashes[file+1])
-			log.Println(hex.EncodeToString(hashes[file+1]))
+			direction[level] = true
+			proof[level] = hashes[file+1]
 		} else {
-			proof = append(proof, hashes[file-1])
-			log.Println(hex.EncodeToString(hashes[file-1]))
+			direction[level] = false
+			proof[level] = hashes[file-1]
 		}
 		file /= 2
 	}
 
-	return proof
+	return &MerkleProof{
+		Proof:     proof,
+		Direction: direction,
+	}
 }
 
-func modifyOddLengthHashes(hashes []Hash) []Hash {
+func (t *MerkleTree) GetRoot() []byte {
+	return t.tree[len(t.tree)-1][0]
+}
+
+func modifyOddLengthHashes(hashes [][]byte) [][]byte {
 	if len(hashes)%2 == 1 {
 		hashes = append(hashes, hashes[len(hashes)-1])
 	}
@@ -66,19 +73,26 @@ func (t *MerkleTree) Print() {
 	}
 }
 
-func calcLevel(hashes []Hash) []Hash {
+func calcLevel(hashes [][]byte) [][]byte {
 	if len(hashes)%2 == 1 {
 		hashes = append(hashes, hashes[len(hashes)-1])
 	}
 
-	result := make([]Hash, len(hashes)/2)
+	result := make([][]byte, len(hashes)/2)
 	hash := sha256.New()
 
+	log.Println()
+	log.Println()
+	log.Println()
 	for i := 0; i < len(hashes); i += 2 {
 		hash.Reset()
 		hash.Write(hashes[i])
 		hash.Write(hashes[i+1])
+		log.Println("merkle hasher one: " + hex.EncodeToString(hashes[i]))
+		log.Println("merkle hasher two: " + hex.EncodeToString(hashes[i+1]))
+
 		result[i/2] = hash.Sum(nil)
+		log.Println("merkle hasher: " + hex.EncodeToString(result[i/2]))
 	}
 
 	return result
@@ -94,10 +108,10 @@ func calcHeight(amount int) int {
 	return int(math.Ceil(math.Log10(float64(amount))/math.Log10(2))) + 1
 }
 
-func generateHashes() []Hash {
+func generateHashes() [][]byte {
 	length := 320000000
 
-	hashes := make([]Hash, length)
+	hashes := make([][]byte, length)
 
 	for i := 0; i < length; i++ {
 		hashes[i] = []byte{0x00}
@@ -107,7 +121,7 @@ func generateHashes() []Hash {
 }
 
 func main() {
-	t := new(MerkleTree).Init([]Hash{
+	t := new(MerkleTree).Init([][]byte{
 		[]byte{0x90, 0xfb, 0x0d, 0x9f, 0x50, 0x3f, 0xb8, 0x9c, 0x27, 0xb2, 0x9d, 0xaf, 0xd4, 0x41, 0x17, 0xf7, 0x0f, 0x6c, 0x19, 0xf0, 0x19, 0xa0, 0x3a, 0xfa, 0x50, 0x3e, 0x47, 0x2a, 0xd7, 0xd0, 0xe5, 0xc9},
 		[]byte{0xb1, 0x8e, 0x89, 0xf7, 0x55, 0x39, 0x80, 0x28, 0x50, 0x4a, 0x3e, 0x5a, 0x8f, 0x33, 0x92, 0x70, 0x8b, 0xa5, 0x84, 0x26, 0x42, 0xc3, 0x5b, 0xef, 0x91, 0xf4, 0xed, 0xc1, 0x8d, 0xb9, 0x0b, 0x91},
 		[]byte{0xb7, 0x8c, 0x8d, 0xc7, 0x8a, 0xb4, 0x94, 0x9d, 0x79, 0x7f, 0xf4, 0x22, 0x2e, 0x49, 0x43, 0x78, 0x6b, 0x69, 0x4e, 0xe7, 0xf7, 0x58, 0x57, 0x3a, 0x51, 0x44, 0x9b, 0x94, 0xe9, 0xf8, 0xce, 0x89},
