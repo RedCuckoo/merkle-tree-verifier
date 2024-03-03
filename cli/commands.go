@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/c-bata/go-prompt"
+	prompt "github.com/c-bata/go-prompt"
 )
 
 const (
@@ -24,9 +24,15 @@ func New() Commands {
 	return Commands{
 		CLISuggestions: []prompt.Suggest{
 			{Text: GENERATE_COMMAND, Description: "Generate multiple files"},
-			{Text: UNLOAD_COMMAND, Description: "Upload local files to the remote server and delete local copies"},
+			{
+				Text:        UNLOAD_COMMAND,
+				Description: "Upload local files to the remote server and delete local copies",
+			},
 			{Text: LIST_COMMAND, Description: "List local or remote files"},
-			{Text: DOWNLOAD_COMMAND, Description: "Download selected file from the remote server and verify integrity"},
+			{
+				Text:        DOWNLOAD_COMMAND,
+				Description: "Download selected file from the remote server and verify integrity",
+			},
 			{Text: RESET_COMMAND, Description: "Reset client and server to initial state (empty)"},
 			{Text: EXIT_COMMAND, Description: "Exit"},
 		},

@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/RedCuckoo/merkle-tree-verifier/client/src/service"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/RedCuckoo/merkle-tree-verifier/client/src/client"
 )
 
 type CommandExecutor struct {
-	Client *service.ClientService
+	Client *client.Service
 }
 
-func NewCommandExecutor(client *service.ClientService) *CommandExecutor {
+func NewCommandExecutor(client *client.Service) *CommandExecutor {
 	return &CommandExecutor{Client: client}
 }
 
@@ -49,7 +50,7 @@ func (e *CommandExecutor) ExecuteCommand(in string) {
 		}
 		return
 	case DOWNLOAD_COMMAND:
-		err := e.Client.Download()
+		err := e.Client.Download(3)
 		if err != nil {
 			fmt.Println(fmt.Errorf(err.Error(), "while executing %s command", DOWNLOAD_COMMAND))
 		}

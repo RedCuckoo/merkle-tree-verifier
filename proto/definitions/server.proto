@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package merkleTreeVerifier.server;
+option go_package = "./;proto";
+
+service MerkleTreeServer {
+  rpc UploadFiles (UploadFilesRequest) returns (UploadFilesReply);
+  rpc DownloadFile (DownloadFileRequest) returns (DownloadFileReply);
+  rpc ListRemote (ListRemoteRequest) returns (ListRemoteReply);
+  rpc Reset (ResetRequest) returns (ResetReply);
+}
+
+message UploadFilesRequest {
+  repeated bytes files = 1;
+}
+
+message UploadFilesReply {
+  bytes merkle_tree_root = 1;
+}
+
+message DownloadFileRequest {
+  uint64 file_index = 1;
+}
+
+message MerkleProof {
+  repeated bytes proof = 1;
+  repeated bool direction = 2;
+}
+
+message DownloadFileReply {
+  bytes file = 1;
+  MerkleProof merkle_proof = 2;
+}
+
+message ListRemoteRequest {
+}
+
+message ListRemoteReply {
+  repeated string file_names = 1;
+}
+
+message ResetRequest {
+}
+
+message ResetReply {
+  bool successful = 1;
+}

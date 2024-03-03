@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/c-bata/go-prompt"
 	"regexp"
 	"strings"
+
+	prompt "github.com/c-bata/go-prompt"
 )
 
 var cliCommands = New()
