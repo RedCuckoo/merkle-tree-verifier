@@ -47,10 +47,8 @@ linters:
     - nosprintfhostport
     - prealloc
     - predeclared
-    - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
     - stylecheck
     - tenv
     - tparallel
@@ -58,7 +56,6 @@ linters:
     - unparam
     - unused
     - varcheck
-    - wastedassign
     - whitespace
 
 linters-settings:

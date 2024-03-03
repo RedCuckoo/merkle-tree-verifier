@@ -75,7 +75,7 @@ func (m *Manager) UploadFiles(
 		filePath := filepath.Join(STORAGE_DIR, fileName)
 
 		if err := os.WriteFile(filePath, bytes, 0o644); err != nil {
-			return nil, fmt.Errorf("error writing file %s: %v", fileName, err)
+			return nil, fmt.Errorf("error writing file %s: %w", fileName, err)
 		}
 
 		m.fileNames[uint64(i)] = fileName

@@ -79,7 +79,7 @@ func readMerkleRootFromFile(dir string) ([]byte, error) {
 		if os.IsNotExist(err) {
 			return make([]byte, 0), nil
 		}
-		return make([]byte, 0), fmt.Errorf("error reading file %s: %v", filePath, err)
+		return make([]byte, 0), fmt.Errorf("error reading file %s: %w", filePath, err)
 	}
 
 	return content, nil
@@ -90,7 +90,7 @@ func writeMerkleRootToFile(dir string, root []byte) error {
 
 	err := os.WriteFile(filePath, root, 0o644)
 	if err != nil {
-		return fmt.Errorf("error writing file %s: %v", filePath, err)
+		return fmt.Errorf("error writing file %s: %w", filePath, err)
 	}
 
 	return nil
@@ -192,7 +192,7 @@ func (c *Service) Download(index uint64) error {
 
 		err = os.WriteFile(filePath, reply.GetMerkleProof().GetProvenData(), 0o644)
 		if err != nil {
-			return fmt.Errorf("error writing to file %s: %v", filePath, err)
+			return fmt.Errorf("error writing to file %s: %w", filePath, err)
 		}
 
 		c.logger.Println("downloaded and verified successfully")

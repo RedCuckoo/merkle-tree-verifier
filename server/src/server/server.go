@@ -33,7 +33,7 @@ func NewMerkleTreeServer(config *config.Config, manager *manager.Manager) *Merkl
 func (s *MerkleTreeServer) Start() error {
 	lis, err := net.Listen("tcp", s.config.GRPCAddress)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %w", err)
 	}
 
 	s.server = grpc.NewServer()
@@ -42,7 +42,7 @@ func (s *MerkleTreeServer) Start() error {
 
 	s.logger.Printf("Starting gRPC server on %s...\n", s.config.GRPCAddress)
 	if err := s.server.Serve(lis); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
+		return fmt.Errorf("failed to serve: %w", err)
 	}
 
 	return nil
