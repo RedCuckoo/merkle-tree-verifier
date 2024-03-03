@@ -5,13 +5,13 @@ import (
 )
 
 type Config struct {
-	ServerGRPCAddress string `mapstructure:"server-grpc-address"`
+	GRPCAddress string `mapstructure:"grpc-address"`
 }
 
 func NewConfig() *Config {
 	config := Config{}
 
-	utils.Load("merkle-tree-client", &config)
+	utils.Load("merkle-tree-server", &config)
 
 	return &config
 }

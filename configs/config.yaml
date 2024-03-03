@@ -1,0 +1,5 @@
+merkle-tree-client:
+  server-grpc-address: "localhost:1706"
+
+merkle-tree-server:
+  grpc-address: "localhost:1706"
