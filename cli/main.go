@@ -7,14 +7,13 @@ import (
 	"syscall"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/RedCuckoo/merkle-tree-verifier/client/src/client"
 	"github.com/RedCuckoo/merkle-tree-verifier/client/src/config"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
 	prompt "github.com/c-bata/go-prompt"
 	"go.uber.org/dig"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -61,7 +60,6 @@ func main() {
 			)
 
 			executor.ExecuteCommand(p)
-
 		}
 	}))
 

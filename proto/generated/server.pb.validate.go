@@ -35,6 +35,107 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on MerkleProof with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *MerkleProof) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MerkleProof with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in MerkleProofMultiError, or
+// nil if none found.
+func (m *MerkleProof) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MerkleProof) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ProvenData
+
+	if len(errors) > 0 {
+		return MerkleProofMultiError(errors)
+	}
+
+	return nil
+}
+
+// MerkleProofMultiError is an error wrapping multiple validation errors
+// returned by MerkleProof.ValidateAll() if the designated constraints aren't met.
+type MerkleProofMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MerkleProofMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MerkleProofMultiError) AllErrors() []error { return m }
+
+// MerkleProofValidationError is the validation error returned by
+// MerkleProof.Validate if the designated constraints aren't met.
+type MerkleProofValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MerkleProofValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MerkleProofValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MerkleProofValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MerkleProofValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MerkleProofValidationError) ErrorName() string { return "MerkleProofValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MerkleProofValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMerkleProof.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MerkleProofValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MerkleProofValidationError{}
+
 // Validate checks the field values on UploadFilesRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -343,105 +444,6 @@ var _ interface {
 	ErrorName() string
 } = DownloadFileRequestValidationError{}
 
-// Validate checks the field values on MerkleProof with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *MerkleProof) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on MerkleProof with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in MerkleProofMultiError, or
-// nil if none found.
-func (m *MerkleProof) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *MerkleProof) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return MerkleProofMultiError(errors)
-	}
-
-	return nil
-}
-
-// MerkleProofMultiError is an error wrapping multiple validation errors
-// returned by MerkleProof.ValidateAll() if the designated constraints aren't met.
-type MerkleProofMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m MerkleProofMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m MerkleProofMultiError) AllErrors() []error { return m }
-
-// MerkleProofValidationError is the validation error returned by
-// MerkleProof.Validate if the designated constraints aren't met.
-type MerkleProofValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e MerkleProofValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e MerkleProofValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e MerkleProofValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e MerkleProofValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e MerkleProofValidationError) ErrorName() string { return "MerkleProofValidationError" }
-
-// Error satisfies the builtin error interface
-func (e MerkleProofValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sMerkleProof.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = MerkleProofValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = MerkleProofValidationError{}
-
 // Validate checks the field values on DownloadFileReply with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -464,7 +466,7 @@ func (m *DownloadFileReply) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for File
+	// no validation rules for FileName
 
 	if all {
 		switch v := interface{}(m.GetMerkleProof()).(type) {

@@ -3,10 +3,9 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
+	cryptorand "crypto/rand"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -17,15 +16,17 @@ import (
 )
 
 const (
-	STORAGE_DIR = "./storage"
+	ROOT_DIR         = "./storage"
+	STORAGE_DIR      = ROOT_DIR + "/" + "files"
+	MERKLE_ROOT_FILE = "0081cde4ac32f0f9222218e0c29a4923a750b2cf3576a3604b4395402d6b89ed"
 )
 
-var errorTreeCreated = errors.New(
+var errTreeCreated = errors.New(
 	"merkle tree already created or \"generate\" has been already called, run \"reset\" to start over",
 )
-var errorGeneratedNotCalled = errors.New("no files, call \"generate\" first")
+var errGeneratedNotCalled = errors.New("no files, call \"generate\" first")
 
-var errorServerRootMismatch = errors.New(
+var errServerRootMismatch = errors.New(
 	"merkle root tree returned from the server differs from calculated",
 )
 
@@ -39,42 +40,77 @@ type Service struct {
 func NewClientService(
 	merkleTreeService proto.MerkleTreeServerClient,
 ) *Service {
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := log.New(os.Stdout, "[client] ", log.LstdFlags)
 	err := os.MkdirAll(STORAGE_DIR, 0o755)
 	if err != nil {
 		log.Fatalf("failed to initialize client, %s\n", err.Error())
 	}
 
-	files, err := os.ReadDir(STORAGE_DIR)
+	root, err := readMerkleRootFromFile(ROOT_DIR)
 	if err != nil {
 		log.Fatalf("failed to initialize client, %s\n", err.Error())
 	}
 
 	return &Service{
-		merkleTreeCreated: len(files) != 0,
-		logger:            logger,
-		merkleTreeService: merkleTreeService,
+		merkleTreeCreated:  len(root) != 0,
+		logger:             logger,
+		merkleTreeService:  merkleTreeService,
+		merkleTreeRootHash: root,
 	}
+}
+
+func readMerkleRootFromFile(dir string) ([]byte, error) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make([]byte, 0), nil
+		}
+		return nil, err
+	}
+
+	if len(files) == 0 {
+		return make([]byte, 0), nil
+	}
+
+	filePath := filepath.Join(dir, MERKLE_ROOT_FILE)
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make([]byte, 0), nil
+		}
+		return make([]byte, 0), fmt.Errorf("error reading file %s: %v", filePath, err)
+	}
+
+	return content, nil
+}
+
+func writeMerkleRootToFile(dir string, root []byte) error {
+	filePath := filepath.Join(dir, MERKLE_ROOT_FILE)
+
+	err := os.WriteFile(filePath, root, 0o644)
+	if err != nil {
+		return fmt.Errorf("error writing file %s: %v", filePath, err)
+	}
+
+	return nil
 }
 
 func (c *Service) GenerateFiles(amount int) error {
 	if c.merkleTreeCreated {
-		return errorTreeCreated
+		return errTreeCreated
 	}
-
-	c.logger.Printf("creating storage directory\n")
 
 	err := os.MkdirAll(STORAGE_DIR, 0o755)
 	if err != nil {
 		log.Fatalf("failed to create directory, %s\n", err.Error())
 	}
 
-	c.logger.Printf("directory created successfully\n")
 	c.logger.Printf("generating %d files...\n", amount)
 
 	for i := 1; i <= amount; i++ {
 		filename := fmt.Sprintf("%s/file%d.txt", STORAGE_DIR, i)
-		err := ioutil.WriteFile(filename, generateRandomData(), 0o644)
+		err := os.WriteFile(filename, generateRandomData(), 0o644)
 		if err != nil {
 			return err
 		}
@@ -88,36 +124,47 @@ func (c *Service) GenerateFiles(amount int) error {
 
 func (c *Service) Unload() error {
 	if !c.merkleTreeCreated {
-		return errorGeneratedNotCalled
+		return errGeneratedNotCalled
 	}
 
-	files, err := getFilesInRepo(STORAGE_DIR)
+	files, fileNames, err := getFilesInRepo(STORAGE_DIR)
 	if err != nil {
 		return err
 	}
 
 	c.merkleTreeRootHash = new(merkle_tree.MerkleTree).Init(files).GetRoot()
 
-	log.Println(hex.EncodeToString(c.merkleTreeRootHash))
+	err = writeMerkleRootToFile(ROOT_DIR, c.merkleTreeRootHash)
+	if err != nil {
+		return err
+	}
 
 	reply, err := c.merkleTreeService.UploadFiles(
 		context.Background(),
-		&proto.UploadFilesRequest{Files: files},
+		&proto.UploadFilesRequest{Files: files, FileNames: fileNames},
 	)
 	if err != nil {
 		return err
 	}
 
 	if !bytes.Equal(reply.MerkleTreeRoot, c.merkleTreeRootHash) {
-		return errorServerRootMismatch
+		return errServerRootMismatch
 	}
 
 	os.RemoveAll(STORAGE_DIR)
+
+	log.Println("unloaded and deleted local copies successfully")
 
 	return nil
 }
 
 func (c *Service) Download(index uint64) error {
+	if index == 0 {
+		return errors.New("invalid index")
+	}
+
+	index--
+
 	reply, err := c.merkleTreeService.DownloadFile(
 		context.Background(),
 		&proto.DownloadFileRequest{FileIndex: index},
@@ -127,7 +174,7 @@ func (c *Service) Download(index uint64) error {
 	}
 
 	ok, err := new(merkle_tree.MerkleTreeVerifier).ValidateFileByProof(
-		reply.File,
+		reply.MerkleProof.GetProvenData(),
 		new(merkle_tree.MerkleProof).UnmarshalProto(reply.MerkleProof),
 		c.merkleTreeRootHash,
 	)
@@ -136,6 +183,18 @@ func (c *Service) Download(index uint64) error {
 	}
 
 	if ok {
+		err := os.MkdirAll(STORAGE_DIR, 0o755)
+		if err != nil {
+			log.Fatalf("failed to create directory, %s\n", err.Error())
+		}
+
+		filePath := filepath.Join(STORAGE_DIR, reply.GetFileName())
+
+		err = os.WriteFile(filePath, reply.GetMerkleProof().GetProvenData(), 0o644)
+		if err != nil {
+			return fmt.Errorf("error writing to file %s: %v", filePath, err)
+		}
+
 		c.logger.Println("downloaded and verified successfully")
 	} else {
 		c.logger.Println("downloaded but failed to verify")
@@ -145,14 +204,14 @@ func (c *Service) Download(index uint64) error {
 }
 
 func (c *Service) ListLocal() error {
-	files, err := getStoredFiles()
+	files, err := getStoredFiles(STORAGE_DIR)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Listing local files:")
+	fmt.Fprintln(os.Stdout, "Listing local files:")
 	for i, file := range files {
-		fmt.Printf("%d. %s\n", i+1, file.Name())
+		fmt.Fprintf(os.Stdout, "%d. %s\n", i+1, file.Name())
 	}
 
 	return nil
@@ -164,9 +223,9 @@ func (c *Service) ListRemote() error {
 		return err
 	}
 
-	fmt.Println("Listing remote files:")
+	fmt.Fprintln(os.Stdout, "Listing remote files:")
 	for i, file := range remote.GetFileNames() {
-		fmt.Printf("%d. %s\n", i+1, file)
+		fmt.Fprintf(os.Stdout, "%d. %s\n", i+1, file)
 	}
 
 	return nil
@@ -182,44 +241,63 @@ func (c *Service) Reset() error {
 
 	if !reset.Successful {
 		c.logger.Println("failed to reset server")
+	} else {
+		c.logger.Println("reset server successfully")
 	}
 
-	return os.RemoveAll(STORAGE_DIR)
+	if err = os.RemoveAll(ROOT_DIR); err == nil {
+		c.logger.Println("reset client successfully")
+		return nil
+	} else {
+		c.logger.Println("failed to reset client")
+		return err
+	}
 }
 
-func getStoredFiles() ([]os.DirEntry, error) {
-	return os.ReadDir(STORAGE_DIR)
+func getStoredFiles(dir string) ([]os.DirEntry, error) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make([]os.DirEntry, 0), nil
+		}
+		return nil, err
+	}
+	return files, nil
 }
 
-func getFilesInRepo(repoPath string) ([][]byte, error) {
+func getFilesInRepo(repoPath string) ([][]byte, []string, error) {
 	var files [][]byte
-
+	var fileNames []string
 	err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
-			data, err := ioutil.ReadFile(path)
+			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
 			files = append(files, data)
+			fileNames = append(fileNames, info.Name())
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return files, nil
+	return files, fileNames, nil
 }
 
 func generateRandomData() []byte {
 	// Generate random length between 10 and 100 bytes
 	length := rand.Intn(91) + 10
 	data := make([]byte, length)
-	rand.Read(data)
+
+	if _, err := cryptorand.Read(data); err != nil {
+		return []byte{}
+	}
 	return data
 }

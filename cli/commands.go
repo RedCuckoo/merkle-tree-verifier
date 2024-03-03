@@ -50,7 +50,7 @@ func New() Commands {
 			},
 		},
 		HelpSuggestion: []prompt.Suggest{
-			{HELP_COMMAND, "get help on command"},
+			{Text: HELP_COMMAND, Description: "get help on command"},
 		},
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -11,10 +12,12 @@ import (
 
 type CommandExecutor struct {
 	Client *client.Service
+	logger *log.Logger
 }
 
 func NewCommandExecutor(client *client.Service) *CommandExecutor {
-	return &CommandExecutor{Client: client}
+	logger := log.New(os.Stdout, "[cli] ", log.LstdFlags)
+	return &CommandExecutor{Client: client, logger: logger}
 }
 
 func (e *CommandExecutor) ExecuteCommand(in string) {
@@ -28,35 +31,39 @@ func (e *CommandExecutor) ExecuteCommand(in string) {
 	case GENERATE_COMMAND:
 		err := e.generateCommand(blocks)
 		if err != nil {
-			fmt.Println(err.Error(), "while executing %s command", GENERATE_COMMAND)
+			e.logger.Println(err.Error(), "while executing %s command", GENERATE_COMMAND)
 		}
 		return
 	case RESET_COMMAND:
 		err := e.Client.Reset()
 		if err != nil {
-			fmt.Println(fmt.Errorf(err.Error(), "while executing %s command", RESET_COMMAND))
+			e.logger.Println(fmt.Errorf(err.Error(), "while executing %s command", RESET_COMMAND))
 		}
 		return
 	case UNLOAD_COMMAND:
 		err := e.Client.Unload()
 		if err != nil {
-			fmt.Println(fmt.Errorf(err.Error(), "while executing %s command", UNLOAD_COMMAND))
+			e.logger.Println(fmt.Errorf(err.Error(), "while executing %s command", UNLOAD_COMMAND))
 		}
 		return
 	case LIST_COMMAND:
 		err := e.listCommand(blocks)
 		if err != nil {
-			fmt.Println(fmt.Errorf(err.Error(), "while executing %s command", DOWNLOAD_COMMAND))
+			e.logger.Println(
+				fmt.Errorf(err.Error(), "while executing %s command", DOWNLOAD_COMMAND),
+			)
 		}
 		return
 	case DOWNLOAD_COMMAND:
-		err := e.Client.Download(3)
+		err := e.downloadCommand(blocks)
 		if err != nil {
-			fmt.Println(fmt.Errorf(err.Error(), "while executing %s command", DOWNLOAD_COMMAND))
+			e.logger.Println(
+				fmt.Errorf(err.Error(), "while executing %s command", DOWNLOAD_COMMAND),
+			)
 		}
 		return
 	default:
-		fmt.Println("unknown command")
+		e.logger.Println("unknown command")
 	}
 }
 
@@ -69,7 +76,7 @@ func (e *CommandExecutor) generateCommand(command []string) error {
 		return ErrInternal
 	}
 	if len(command) == 1 || len(command) == 2 && command[1] == HELP_COMMAND {
-		fmt.Printf("\nUsage: %s AMOUNT_OF_FILES_TO_GENERATE\n\n", GENERATE_COMMAND)
+		fmt.Fprintf(os.Stdout, "\nUsage: %s AMOUNT_OF_FILES_TO_GENERATE\n\n", GENERATE_COMMAND)
 		return nil
 	}
 
@@ -93,9 +100,9 @@ func (e *CommandExecutor) listCommand(command []string) error {
 		return ErrInternal
 	}
 	if len(command) == 1 || len(command) == 2 && command[1] == HELP_COMMAND {
-		fmt.Printf("\nUsage: %s [OPTIONS]\n", LIST_COMMAND)
-		fmt.Printf("\nOptions:\n" +
-			"\t--local  	Display local files\n" +
+		fmt.Fprintf(os.Stdout, "\nUsage: %s [OPTIONS]\n", LIST_COMMAND)
+		fmt.Fprintf(os.Stdout, "\nOptions:\n"+
+			"\t--local  	Display local files\n"+
 			"\t--remote 	Display remote files on the server\n")
 		return nil
 	}
@@ -110,4 +117,29 @@ func (e *CommandExecutor) listCommand(command []string) error {
 	}
 
 	return nil
+}
+
+func (e *CommandExecutor) downloadCommand(command []string) error {
+	if len(command) == 0 {
+		return nil
+	}
+
+	if command[0] != DOWNLOAD_COMMAND {
+		return ErrInternal
+	}
+	if len(command) == 1 || len(command) == 2 && command[1] == HELP_COMMAND {
+		fmt.Fprintf(os.Stdout, "\nUsage: %s FILE_INDEX\n", DOWNLOAD_COMMAND)
+		return nil
+	}
+
+	if len(command) == 2 {
+		amount, err := strconv.Atoi(command[1])
+		if err != nil {
+			return err
+		}
+
+		return e.Client.Download(uint64(amount))
+	} else {
+		return ErrInvalidRequest
+	}
 }

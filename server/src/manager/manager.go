@@ -1,7 +1,149 @@
 package manager
 
-type Manager struct{}
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/RedCuckoo/merkle-tree-verifier/merkle_tree"
+	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
+)
+
+const STORAGE_DIR = "./server_storage"
+
+type Manager struct {
+	merkleTree *merkle_tree.MerkleTree
+	fileNames  map[uint64]string
+}
 
 func NewManager() *Manager {
-	return &Manager{}
+	if err := os.MkdirAll(STORAGE_DIR, 0o755); err != nil {
+		panic(fmt.Sprintf("filed to create dir: %v", err))
+	}
+
+	files, err := os.ReadDir(STORAGE_DIR)
+	if err != nil {
+		panic(fmt.Sprintf("filed to create dir: %v", err))
+	}
+
+	if len(files) == 0 {
+		return &Manager{
+			merkleTree: nil,
+			fileNames:  nil,
+		}
+	} else {
+		fileNames := make(map[uint64]string)
+		fileContent := make([][]byte, len(files))
+		for i, file := range files {
+			fileNames[uint64(i)] = file.Name()
+
+			content, err := os.ReadFile(filepath.Join(STORAGE_DIR, file.Name()))
+			if err != nil {
+				panic(fmt.Sprintf("failed to read file %s: %v", file.Name(), err))
+			}
+			fileContent[i] = content
+		}
+
+		merkleTree := new(merkle_tree.MerkleTree).Init(fileContent)
+		return &Manager{
+			fileNames:  fileNames,
+			merkleTree: merkleTree,
+		}
+	}
+}
+
+func (m *Manager) UploadFiles(
+	ctx context.Context,
+	request *proto.UploadFilesRequest,
+) (*proto.UploadFilesReply, error) {
+	if m.merkleTree != nil || m.fileNames != nil {
+		return nil, fmt.Errorf("merkle tree is initialized, reset first")
+	}
+
+	m.fileNames = make(map[uint64]string)
+	if err := os.MkdirAll(STORAGE_DIR, 0o755); err != nil {
+		return nil, err
+	}
+
+	if len(request.GetFiles()) != len(request.GetFileNames()) {
+		return nil, fmt.Errorf("number of data slices does not match number of filenames")
+	}
+
+	for i, bytes := range request.GetFiles() {
+		fileName := request.GetFileNames()[i]
+		filePath := filepath.Join(STORAGE_DIR, fileName)
+
+		if err := os.WriteFile(filePath, bytes, 0o644); err != nil {
+			return nil, fmt.Errorf("error writing file %s: %v", fileName, err)
+		}
+
+		m.fileNames[uint64(i)] = fileName
+	}
+
+	m.merkleTree = new(merkle_tree.MerkleTree).Init(request.GetFiles())
+
+	root := m.merkleTree.GetRoot()
+
+	return &proto.UploadFilesReply{MerkleTreeRoot: root}, nil
+}
+
+func (m *Manager) DownloadFile(
+	ctx context.Context,
+	request *proto.DownloadFileRequest,
+) (*proto.DownloadFileReply, error) {
+	if m.merkleTree == nil {
+		return nil, fmt.Errorf("merkle tree wasn't initialized, unload files first")
+	}
+
+	if m.fileNames == nil {
+		return nil, fmt.Errorf("storage is not initialized, reset and start over")
+	}
+
+	if request.GetFileIndex() >= uint64(len(m.fileNames)) {
+		return nil, fmt.Errorf("file index out of range")
+	}
+
+	fileName := m.fileNames[request.GetFileIndex()]
+
+	proof := m.merkleTree.GetProof(request.GetFileIndex())
+
+	return &proto.DownloadFileReply{
+		FileName:    fileName,
+		MerkleProof: proof.MarshalProto(),
+	}, nil
+}
+
+func (m *Manager) ListRemote(
+	ctx context.Context,
+	request *proto.ListRemoteRequest,
+) (*proto.ListRemoteReply, error) {
+	files, err := os.ReadDir(STORAGE_DIR)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &proto.ListRemoteReply{FileNames: []string{}}, nil
+		}
+		return nil, err
+	}
+
+	fileNames := make([]string, len(files))
+	for i, file := range files {
+		fileNames[i] = file.Name()
+	}
+
+	return &proto.ListRemoteReply{FileNames: fileNames}, nil
+}
+
+func (m *Manager) Reset(
+	ctx context.Context,
+	request *proto.ResetRequest,
+) (*proto.ResetReply, error) {
+	m.merkleTree = nil
+	m.fileNames = nil
+
+	if err := os.RemoveAll(STORAGE_DIR); err != nil {
+		return &proto.ResetReply{Successful: false}, err
+	}
+
+	return &proto.ResetReply{Successful: true}, nil
 }

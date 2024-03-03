@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/manager"
-
 	"github.com/RedCuckoo/merkle-tree-verifier/server/src/config"
+	"github.com/RedCuckoo/merkle-tree-verifier/server/src/manager"
 	"github.com/RedCuckoo/merkle-tree-verifier/server/src/server"
 )
 

@@ -28,12 +28,15 @@ func (t *MerkleTree) Init(hashes [][]byte) *MerkleTree {
 	return t
 }
 
-func (t *MerkleTree) GetProof(file int) *MerkleProof {
-
+func (t *MerkleTree) GetProof(file uint64) *MerkleProof {
 	proof := make([][]byte, t.height-1)
 	direction := make([]bool, t.height-1)
+	var provenData []byte
 	for level := 0; level < t.height-1; level++ {
 		hashes := modifyOddLengthHashes(t.tree[level])
+		if provenData == nil {
+			provenData = hashes[file]
+		}
 		if file%2 == 0 {
 			direction[level] = true
 			proof[level] = hashes[file+1]
@@ -45,8 +48,9 @@ func (t *MerkleTree) GetProof(file int) *MerkleProof {
 	}
 
 	return &MerkleProof{
-		Proof:     proof,
-		Direction: direction,
+		Proof:      proof,
+		Direction:  direction,
+		ProvenData: provenData,
 	}
 }
 
