@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"github.com/RedCuckoo/merkle-tree-verifier/server/src/manager"
 	"net"
 
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
@@ -11,14 +13,16 @@ import (
 )
 
 type MerkleTreeServer struct {
-	config *config.Config
-	server *grpc.Server
+	config  *config.Config
+	server  *grpc.Server
+	manager *manager.Manager
 	proto.MerkleTreeServerServer
 }
 
-func NewMerkleTreeServer(config *config.Config) *MerkleTreeServer {
+func NewMerkleTreeServer(config *config.Config, manager *manager.Manager) *MerkleTreeServer {
 	return &MerkleTreeServer{
-		config: config,
+		config:  config,
+		manager: manager,
 	}
 }
 
@@ -42,4 +46,29 @@ func (s *MerkleTreeServer) Start() error {
 
 func (s *MerkleTreeServer) Stop() {
 	s.server.GracefulStop()
+}
+
+func (s *MerkleTreeServer) UploadFiles(
+	ctx context.Context,
+	request *proto.UploadFilesRequest,
+) (*proto.UploadFilesReply, error) {
+	return nil, nil
+}
+func (s *MerkleTreeServer) DownloadFile(
+	ctx context.Context,
+	request *proto.DownloadFileRequest,
+) (*proto.DownloadFileReply, error) {
+	return nil, nil
+}
+func (s *MerkleTreeServer) ListRemote(
+	ctx context.Context,
+	request *proto.ListRemoteRequest,
+) (*proto.ListRemoteReply, error) {
+	return nil, nil
+}
+func (s *MerkleTreeServer) Reset(
+	ctx context.Context,
+	request *proto.ResetRequest,
+) (*proto.ResetReply, error) {
+	return nil, nil
 }
