@@ -9,7 +9,9 @@ import (
 
 var cliCommands = New()
 
-var incompleteCommands = regexp.MustCompile(`(?P<command>generate|list|download)\s{1}`)
+var incompleteCommands = regexp.MustCompile(
+	`(?P<command>generate|list|download|unload|reset|exit)\s{1}`,
+)
 
 func getRegexGroups(text string) map[string]string {
 	if !incompleteCommands.Match([]byte(text)) {
@@ -34,6 +36,12 @@ func completer(d prompt.Document) []prompt.Suggest {
 
 		if command == GENERATE_COMMAND || command == LIST_COMMAND || command == DOWNLOAD_COMMAND {
 			if len(strings.Split(d.Text, " ")) > 2 {
+				return []prompt.Suggest{}
+			}
+		}
+
+		if command == UNLOAD_COMMAND || command == RESET_COMMAND || command == EXIT_COMMAND {
+			if len(strings.Split(d.Text, " ")) > 1 {
 				return []prompt.Suggest{}
 			}
 		}
