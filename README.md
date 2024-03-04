@@ -50,7 +50,3 @@ list --local
 list --remote
 reset
 ```
-
-# Demo
-
-[![Video](demo.mp4)](demo.mp4)
