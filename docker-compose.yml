@@ -1,0 +1,4 @@
+version: '3'
+services:
+  merkle-tree-server:
+    image: merkle-tree-server:latest

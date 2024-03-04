@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"regexp"
@@ -28,7 +28,7 @@ func getRegexGroups(text string) map[string]string {
 	return result
 }
 
-func completer(d prompt.Document) []prompt.Suggest {
+func Completer(d prompt.Document) []prompt.Suggest {
 	word := d.GetWordBeforeCursor()
 	group := getRegexGroups(d.Text)
 	if group != nil {

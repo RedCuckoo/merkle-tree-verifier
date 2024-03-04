@@ -36,7 +36,10 @@ func (s *MerkleTreeServer) Start() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	s.server = grpc.NewServer()
+	s.server = grpc.NewServer(
+		grpc.MaxRecvMsgSize(1024*1024*1000),
+		grpc.MaxSendMsgSize(1024*1024*1000),
+	)
 
 	proto.RegisterMerkleTreeServerServer(s.server, s)
 

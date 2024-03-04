@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	prompt "github.com/c-bata/go-prompt"

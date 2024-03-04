@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/RedCuckoo/merkle-tree-verifier/client/src/cli"
 	"github.com/RedCuckoo/merkle-tree-verifier/client/src/client"
 	"github.com/RedCuckoo/merkle-tree-verifier/client/src/config"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
@@ -49,12 +50,12 @@ func main() {
 		cfg *config.Config,
 		clientService *client.Service,
 	) {
-		executor := NewCommandExecutor(clientService)
+		executor := cli.NewCommandExecutor(clientService)
 
 		for {
 			p := prompt.Input(
 				"merkle-tree-verifier> ",
-				completer,
+				cli.Completer,
 				prompt.OptionTitle("merkle-tree-verifier CLI"),
 				prompt.OptionPrefixBackgroundColor(prompt.Purple),
 			)

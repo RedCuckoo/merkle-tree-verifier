@@ -188,7 +188,7 @@ func (c *Service) Download(index uint64) error {
 
 		c.logger.Println("downloaded and verified successfully")
 	} else {
-		c.logger.Println("downloaded but failed to verify")
+		c.logger.Println("downloaded but failed to verify, FILE IS CORRUPT")
 	}
 
 	return nil

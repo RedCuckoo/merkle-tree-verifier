@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/RedCuckoo/merkle-tree-verifier/merkle_tree"
@@ -16,19 +17,19 @@ const STORAGE_DIR = "./server_storage"
 type Manager struct {
 	merkleTree *merkle_tree.MerkleTree
 	fileNames  map[uint64]string
+	filesMutex *sync.RWMutex
 }
 
 func NewManager() *Manager {
-	manager := new(Manager)
+	manager := &Manager{
+		filesMutex: new(sync.RWMutex),
+	}
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				manager.syncManager()
-			}
+		for range ticker.C {
+			manager.syncManager()
 		}
 	}()
 
@@ -36,6 +37,9 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) syncManager() *Manager {
+	m.filesMutex.Lock()
+	defer m.filesMutex.Unlock()
+
 	if err := os.MkdirAll(STORAGE_DIR, 0o755); err != nil {
 		panic(fmt.Sprintf("failed to create dir: %v", err))
 	}
@@ -46,10 +50,8 @@ func (m *Manager) syncManager() *Manager {
 	}
 
 	if len(files) == 0 {
-		*m = Manager{
-			merkleTree: nil,
-			fileNames:  nil,
-		}
+		m.merkleTree = nil
+		m.fileNames = nil
 	} else {
 		fileNames := make(map[uint64]string)
 		fileContent := make([][]byte, len(files))
@@ -64,10 +66,9 @@ func (m *Manager) syncManager() *Manager {
 		}
 
 		merkleTree := new(merkle_tree.MerkleTree).Init(fileContent)
-		*m = Manager{
-			fileNames:  fileNames,
-			merkleTree: merkleTree,
-		}
+
+		m.merkleTree = merkleTree
+		m.fileNames = fileNames
 	}
 	return m
 }
@@ -76,6 +77,9 @@ func (m *Manager) UploadFiles(
 	_ context.Context,
 	request *proto.UploadFilesRequest,
 ) (*proto.UploadFilesReply, error) {
+	m.filesMutex.Lock()
+	defer m.filesMutex.Unlock()
+
 	if m.merkleTree != nil || m.fileNames != nil {
 		return nil, fmt.Errorf("merkle tree is initialized, reset first")
 	}
@@ -111,6 +115,9 @@ func (m *Manager) DownloadFile(
 	_ context.Context,
 	request *proto.DownloadFileRequest,
 ) (*proto.DownloadFileReply, error) {
+	m.filesMutex.RLock()
+	defer m.filesMutex.RUnlock()
+
 	if m.merkleTree == nil {
 		return nil, fmt.Errorf("merkle tree wasn't initialized, unload files first")
 	}
@@ -137,6 +144,9 @@ func (m *Manager) ListRemote(
 	_ context.Context,
 	_ *proto.ListRemoteRequest,
 ) (*proto.ListRemoteReply, error) {
+	m.filesMutex.RLock()
+	defer m.filesMutex.RUnlock()
+
 	files, err := os.ReadDir(STORAGE_DIR)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -157,6 +167,9 @@ func (m *Manager) Reset(
 	_ context.Context,
 	_ *proto.ResetRequest,
 ) (*proto.ResetReply, error) {
+	m.filesMutex.Lock()
+	defer m.filesMutex.Unlock()
+
 	m.merkleTree = nil
 	m.fileNames = nil
 
