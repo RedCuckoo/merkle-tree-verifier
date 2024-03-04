@@ -89,6 +89,13 @@ func (e *CommandExecutor) generateCommand(command []string) error {
 			fmt.Fprintf(os.Stdout, "\nUsage: %s AMOUNT_OF_FILES_TO_GENERATE\n\n", GENERATE_COMMAND)
 			return ErrInvalidRequest
 		}
+
+		if amount <= 0 {
+			fmt.Fprintf(os.Stdout, "\nUsage: %s AMOUNT_OF_FILES_TO_GENERATE\n"+
+				"\tAMOUNT_OF_FILES_TO_GENERATE > 0\n\n", GENERATE_COMMAND)
+			return ErrInvalidRequest
+		}
+
 		return e.Client.GenerateFiles(amount)
 	}
 
@@ -140,6 +147,12 @@ func (e *CommandExecutor) downloadCommand(command []string) error {
 		amount, err := strconv.Atoi(command[1])
 		if err != nil {
 			return err
+		}
+
+		if amount <= 0 {
+			fmt.Fprintf(os.Stdout, "\nUsage: %s FILE_INDEX\n"+
+				"\tFILE_INDEX > 0 (according to indexing from \"list\" command\n\n", DOWNLOAD_COMMAND)
+			return ErrInvalidRequest
 		}
 
 		return e.Client.Download(uint64(amount))

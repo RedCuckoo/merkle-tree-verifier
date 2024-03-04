@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/RedCuckoo/merkle-tree-verifier/merkle_tree"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
@@ -18,17 +19,34 @@ type Manager struct {
 }
 
 func NewManager() *Manager {
+	manager := new(Manager)
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				manager.syncManager()
+			}
+		}
+	}()
+
+	return manager.syncManager()
+}
+
+func (m *Manager) syncManager() *Manager {
 	if err := os.MkdirAll(STORAGE_DIR, 0o755); err != nil {
-		panic(fmt.Sprintf("filed to create dir: %v", err))
+		panic(fmt.Sprintf("failed to create dir: %v", err))
 	}
 
 	files, err := os.ReadDir(STORAGE_DIR)
 	if err != nil {
-		panic(fmt.Sprintf("filed to create dir: %v", err))
+		panic(fmt.Sprintf("failed to create dir: %v", err))
 	}
 
 	if len(files) == 0 {
-		return &Manager{
+		*m = Manager{
 			merkleTree: nil,
 			fileNames:  nil,
 		}
@@ -46,11 +64,12 @@ func NewManager() *Manager {
 		}
 
 		merkleTree := new(merkle_tree.MerkleTree).Init(fileContent)
-		return &Manager{
+		*m = Manager{
 			fileNames:  fileNames,
 			merkleTree: merkleTree,
 		}
 	}
+	return m
 }
 
 func (m *Manager) UploadFiles(

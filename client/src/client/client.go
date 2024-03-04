@@ -201,8 +201,8 @@ func (c *Service) ListLocal() error {
 	}
 
 	fmt.Fprintln(os.Stdout, "Listing local files:")
-	for i, file := range files {
-		fmt.Fprintf(os.Stdout, "%d. %s\n", i+1, file.Name())
+	for _, file := range files {
+		fmt.Fprintf(os.Stdout, "* %s\n", file.Name())
 	}
 
 	return nil
