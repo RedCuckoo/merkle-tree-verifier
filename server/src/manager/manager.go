@@ -54,7 +54,7 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) UploadFiles(
-	ctx context.Context,
+	_ context.Context,
 	request *proto.UploadFilesRequest,
 ) (*proto.UploadFilesReply, error) {
 	if m.merkleTree != nil || m.fileNames != nil {
@@ -89,7 +89,7 @@ func (m *Manager) UploadFiles(
 }
 
 func (m *Manager) DownloadFile(
-	ctx context.Context,
+	_ context.Context,
 	request *proto.DownloadFileRequest,
 ) (*proto.DownloadFileReply, error) {
 	if m.merkleTree == nil {
@@ -115,8 +115,8 @@ func (m *Manager) DownloadFile(
 }
 
 func (m *Manager) ListRemote(
-	ctx context.Context,
-	request *proto.ListRemoteRequest,
+	_ context.Context,
+	_ *proto.ListRemoteRequest,
 ) (*proto.ListRemoteReply, error) {
 	files, err := os.ReadDir(STORAGE_DIR)
 	if err != nil {
@@ -135,8 +135,8 @@ func (m *Manager) ListRemote(
 }
 
 func (m *Manager) Reset(
-	ctx context.Context,
-	request *proto.ResetRequest,
+	_ context.Context,
+	_ *proto.ResetRequest,
 ) (*proto.ResetReply, error) {
 	m.merkleTree = nil
 	m.fileNames = nil

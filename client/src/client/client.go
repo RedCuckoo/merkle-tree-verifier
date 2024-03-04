@@ -21,15 +21,6 @@ const (
 	MERKLE_ROOT_FILE = "0081cde4ac32f0f9222218e0c29a4923a750b2cf3576a3604b4395402d6b89ed"
 )
 
-var errTreeCreated = errors.New(
-	"merkle tree already created or \"generate\" has been already called, run \"reset\" to start over",
-)
-var errGeneratedNotCalled = errors.New("no files, call \"generate\" first")
-
-var errServerRootMismatch = errors.New(
-	"merkle root tree returned from the server differs from calculated",
-)
-
 type Service struct {
 	merkleTreeCreated  bool
 	logger             *log.Logger
@@ -98,7 +89,7 @@ func writeMerkleRootToFile(dir string, root []byte) error {
 
 func (c *Service) GenerateFiles(amount int) error {
 	if c.merkleTreeCreated {
-		return errTreeCreated
+		return ErrTreeCreated
 	}
 
 	err := os.MkdirAll(STORAGE_DIR, 0o755)
@@ -124,7 +115,7 @@ func (c *Service) GenerateFiles(amount int) error {
 
 func (c *Service) Unload() error {
 	if !c.merkleTreeCreated {
-		return errGeneratedNotCalled
+		return ErrGeneratedNotCalled
 	}
 
 	files, fileNames, err := getFilesInRepo(STORAGE_DIR)
@@ -148,7 +139,7 @@ func (c *Service) Unload() error {
 	}
 
 	if !bytes.Equal(reply.MerkleTreeRoot, c.merkleTreeRootHash) {
-		return errServerRootMismatch
+		return ErrServerRootMismatch
 	}
 
 	os.RemoveAll(STORAGE_DIR)
