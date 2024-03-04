@@ -3,4 +3,4 @@ services:
   merkle-tree-server:
     image: redcuckoo/merkle-tree-verifier-server:v0.1.0
     ports:
-      - "1706:1706"
+      - "127.0.0.1:1706:1706"
