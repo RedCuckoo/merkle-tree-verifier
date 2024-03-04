@@ -8,6 +8,12 @@ Client when downloading file, can calculate merkle root hash from proof and be s
 
 ---
 
+# Requirements
+
+* [Docker ^20.10.6](https://www.docker.com/get-started)
+* [Compose ^3.3](https://docs.docker.com/compose/install/)
+* [Go ^1.20](https://golang.org/)
+
 
 # Installation
 
@@ -20,7 +26,15 @@ docker-compose up -d
 2. Run client:
 
 ```shell
-docker run -it redcuckoo/merkle-tree-verifier-client:v0.1.0
+docker pull redcuckoo/merkle-tree-verifier-server:v0.2.0
+docker run --network merkle-tree-verifier_default -it redcuckoo/merkle-tree-verifier-client:v0.2.0
+```
+
+## OR
+
+Run script:
+```shell
+./run.sh
 ```
 
 # Usage
@@ -28,12 +42,12 @@ docker run -it redcuckoo/merkle-tree-verifier-client:v0.1.0
 Available commands:
 
 ```shell
-generate AMOUNT_OF_FILES
-list --local
-list --remote
-unload
-download FILE_INDEX
-reset
+generate AMOUNT_OF_FILES # generate N amount of files on the client
+list --local # list files stored locally on the client
+list --remote # list files stored remotely on the server
+unload # send files to the server, store merkle root, delete local
+download FILE_INDEX # download file from the server
+reset # reset client and server
 exit
 ```
 
