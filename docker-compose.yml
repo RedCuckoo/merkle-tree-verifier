@@ -1,4 +1,6 @@
 version: '3'
 services:
   merkle-tree-server:
-    image: merkle-tree-server:latest
+    image: redcuckoo/merkle-tree-verifier-server:v0.1.0
+    ports:
+      - "1706:1706"
