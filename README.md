@@ -64,3 +64,9 @@ list --local
 list --remote
 reset
 ```
+
+# Demo 
+
+![Demo](demo.gif)
+
+
