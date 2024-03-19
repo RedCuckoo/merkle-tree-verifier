@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/config"
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/manager"
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/server"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/server/config"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/server/manager"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/server/server"
 )
 
 func main() {

@@ -7,9 +7,9 @@ import (
 	"net"
 	"os"
 
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/server/config"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/server/manager"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/config"
-	"github.com/RedCuckoo/merkle-tree-verifier/server/src/manager"
 	"google.golang.org/grpc"
 )
 

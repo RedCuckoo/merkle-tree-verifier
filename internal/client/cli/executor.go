@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/RedCuckoo/merkle-tree-verifier/client/src/client"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/client/service/client"
 )
 
 type CommandExecutor struct {

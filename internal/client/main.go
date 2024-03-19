@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/RedCuckoo/merkle-tree-verifier/client/src/cli"
-	"github.com/RedCuckoo/merkle-tree-verifier/client/src/client"
-	"github.com/RedCuckoo/merkle-tree-verifier/client/src/config"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/client/cli"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/client/config"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/client/service/client"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
 	prompt "github.com/c-bata/go-prompt"
 	"go.uber.org/dig"

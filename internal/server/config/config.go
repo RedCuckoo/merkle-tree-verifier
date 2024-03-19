@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/RedCuckoo/merkle-tree-verifier/utils"
+	"github.com/RedCuckoo/merkle-tree-verifier/internal/utils"
 )
 
 type Config struct {

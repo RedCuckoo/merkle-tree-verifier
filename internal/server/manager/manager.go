@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/RedCuckoo/merkle-tree-verifier/merkle_tree"
+	"github.com/RedCuckoo/merkle-tree-verifier/pkg/merkle_tree"
 	proto "github.com/RedCuckoo/merkle-tree-verifier/proto/generated"
 )
 
